@@ -1,0 +1,18 @@
+app: 
+  logs:
+    level: debug  
+
+  server:
+    log_level: debug
+    health_check: true
+    listen_address: "0.0.0.0"
+    port: 8090
+    protocol: http
+
+storage:
+  log_level: debug
+  provider: postgres
+  hostname: localhost
+  port: 5432
+  username: admin
+  password: admin
