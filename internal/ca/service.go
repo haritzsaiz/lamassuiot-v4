@@ -5,39 +5,41 @@ import (
 	"fmt"
 
 	"github.com/lamassuiot/lamassuiot/v4/pkg/ca"
+	"github.com/lamassuiot/lamassuiot/v4/pkg/kms"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/models"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/logger"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/resources"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
 type CAServiceBackend struct {
-	logger    *logger.Logger
-	caStorage CARepository
+	logger     *logger.Logger
+	caStorage  CARepository
+	kmsService kms.KMSService
 }
 
 type CAServiceBuilder struct {
-	Logger    *logger.Logger
-	CAStorage CARepository
+	Logger     *logger.Logger
+	CAStorage  CARepository
+	KMSService kms.KMSService
 }
 
 func NewCAService(builder CAServiceBuilder) ca.CAService {
 	svc := CAServiceBackend{
-		logger:    builder.Logger,
-		caStorage: builder.CAStorage,
+		logger:     builder.Logger,
+		caStorage:  builder.CAStorage,
+		kmsService: builder.KMSService,
 	}
 
 	return &svc
 }
 
 func (svc *CAServiceBackend) CreateCA(ctx context.Context, input ca.CreateCAInput) error {
-	ctx, span := otel.GetTracerProvider().Tracer("svc").Start(ctx, "CreateCA", oteltrace.WithAttributes(attribute.String("ca.name", input.Name)))
-	defer span.End()
+	svc.kmsService.CreateKMSKey(ctx, kms.CreateKMSInput{
+		Name: input.Name,
+	})
 
 	ca, err := svc.caStorage.Insert(ctx, &models.CACertificate{
-		ID: input.Name,
+		Name: input.Name,
 	})
 
 	fmt.Println(ca)

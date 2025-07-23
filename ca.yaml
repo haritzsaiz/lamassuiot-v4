@@ -10,7 +10,7 @@ app:
     protocol: http
 
 storage:
-  log_level: debug
+  log_level: trace
   provider: postgres
   hostname: localhost
   port: 5432

@@ -10,6 +10,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
+	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 func CreatePostgresDBConnection(logger *logger.Logger, cfg config.PostgresConfig, database string) (*gorm.DB, error) {
@@ -21,6 +22,12 @@ func CreatePostgresDBConnection(logger *logger.Logger, cfg config.PostgresConfig
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: dbLogger,
 	})
+
+	err = db.Use(tracing.NewPlugin())
+	if err != nil {
+		logger.Errorf("Failed to use OpenTelemetry plugin: %v", err)
+		return nil, err
+	}
 
 	return db, err
 }
