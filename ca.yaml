@@ -3,7 +3,7 @@ app:
     level: debug  
 
   server:
-    log_level: debug
+    log_level: trace
     health_check: true
     listen_address: "0.0.0.0"
     port: 8090

@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gofiber/contrib/otelfiber"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -34,9 +35,10 @@ func NewFiberApp(log *logger.Logger) *fiber.App {
 	router.Use(
 		fiber_context_mw.WithContext(TIMEOUT),
 		cors.New(corsCfg),
+		otelfiber.Middleware(),
 		fiber_logger_mw.UseLogger(log),
 		fiber_logger_mw.DumpWithOptions(true, true, true, true, func(dumpStr string) {
-			logger.Trace(dumpStr)
+			log.Trace(dumpStr)
 		}),
 	)
 
@@ -106,7 +108,7 @@ func RunHttpServer(log *logger.Logger, routerEngine *fiber.App, httpServerCfg co
 				httpErrChan <- err
 			}
 		} else {
-			logger.Info(fmt.Sprintf("HTTP server listening on %s:%d", addr, usedPort))
+			logger.Info(fmt.Sprintf("HTTP server listening on %s", addr))
 			startLaunching()
 
 			err := mainEngine.Listener(listener)

@@ -45,7 +45,7 @@ func NewCAHttpRoutes(svc ca.CAService) *caHttpRoutes {
 	}
 }
 
-func (r *caHttpRoutes) CreateUser(ctx *fiber.Ctx) error {
+func (r *caHttpRoutes) CreateCA(ctx *fiber.Ctx) error {
 	var requestBody ca.CreateCAInput
 
 	if err := ctx.BodyParser(&requestBody); err != nil {
@@ -60,7 +60,7 @@ func (r *caHttpRoutes) CreateUser(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"errors": errs})
 	}
 
-	err := r.svc.CreateCA(fiber_context_mw.GetRequestContext(ctx), requestBody)
+	err := r.svc.CreateCA(ctx.UserContext(), requestBody)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"err": err.Error()})
 	}

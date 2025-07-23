@@ -31,7 +31,7 @@ var LogFormatter = &Formatter{
 }
 
 func SetupLogger(currentLevel Level, serviceID string, subsystem string) *Logger {
-	var level Level
+	var level Level = currentLevel
 
 	var output io.Writer = os.Stdout
 	if currentLevel == LevelNone {

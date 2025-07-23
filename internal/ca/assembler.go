@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/lamassuiot/lamassuiot/v4/pkg/ca"
+	"github.com/lamassuiot/lamassuiot/v4/pkg/models"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/config"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/logger"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/storage"
@@ -41,7 +42,7 @@ func createCAStorageInstance(logger *logger.Logger, conf config.PluggableStorage
 		return nil, fmt.Errorf("could not create storage engine: %s", err)
 	}
 
-	psqlCli.AutoMigrate(&CAConfig{})
+	psqlCli.AutoMigrate(&models.CACertificate{})
 
 	userStorage, err := NewCAPostgresRepository(logger, psqlCli)
 	if err != nil {

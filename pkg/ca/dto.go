@@ -6,7 +6,7 @@ import (
 )
 
 type CreateCAInput struct {
-	Name string `json:"name" validate:"required"`
+	Name string `json:"name"`
 }
 
 type GetCAsInput struct {

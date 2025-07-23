@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultLogFormat = "%s %-7s %s %s %3d %s [ %30v ] | %13v | \"%s\"\n"
+	defaultLogFormat = "%s %-7s %s %s %3d %s [ %30v ] | %13v | \"%s"
 )
 
 type traceRequestWriter struct {

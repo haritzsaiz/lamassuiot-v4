@@ -11,6 +11,6 @@ func NewCAHTTPLayer(parentRouterGroup *fiber.Router, svc ca.CAService) {
 	router := parentRouterGroup
 	rv1 := (*router).Group("/v1")
 
-	rv1.Get("/user", routes.GetAllCAs)
-	rv1.Put("/user", routes.CreateUser)
+	rv1.Get("/ca", routes.GetAllCAs)
+	rv1.Post("/ca", routes.CreateCA)
 }
