@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/middleware/context"
+	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/server/middleware/context"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/logger"
 )
 

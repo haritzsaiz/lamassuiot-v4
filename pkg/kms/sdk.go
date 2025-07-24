@@ -22,8 +22,11 @@ func (s *KMSSdkService) CreateKMSKey(ctx context.Context, input CreateKMSInput) 
 	ctx, span := otel.GetTracerProvider().Tracer("kms-sdk").Start(ctx, "CreateKMSKey", trace.WithAttributes(semconv.PeerService("KMS")))
 	defer span.End()
 
-	body := map[string]string{
-		"name": input.Name,
+	body := CreateKMSRequestBody{
+		Alias:     input.Alias,
+		Algorithm: input.Algorithm,
+		Size:      input.Size,
+		PublicKey: input.PublicKey,
 	}
 
 	jsonBody, err := json.Marshal(body)

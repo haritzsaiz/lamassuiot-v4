@@ -1,4 +1,4 @@
-package http
+package server
 
 import (
 	"crypto/tls"
@@ -13,9 +13,9 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/config"
-	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/controllers"
-	fiber_context_mw "github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/middleware/context"
-	fiber_logger_mw "github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/middleware/logger"
+	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/server/controllers"
+	fiber_context_mw "github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/server/middleware/context"
+	fiber_logger_mw "github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/server/middleware/logger"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/logger"
 )
 

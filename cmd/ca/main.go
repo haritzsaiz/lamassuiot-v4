@@ -5,8 +5,8 @@ import (
 
 	"github.com/lamassuiot/lamassuiot/v4/internal/ca"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/config"
-	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/http"
-	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/controllers"
+	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/server"
+	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/server/controllers"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/logger"
 	"gopkg.in/yaml.v2"
 )
@@ -49,12 +49,12 @@ func main() {
 
 	lHttp := logger.SetupLogger(conf.AppConfig.Server.LogLevel, "API", "HTTP Server")
 
-	httpEngine := http.NewFiberApp(lHttp)
+	httpEngine := server.NewFiberApp(lHttp)
 	httpGrp := httpEngine.Group("/")
 
 	ca.NewCAHTTPLayer(&httpGrp, *caService)
 
-	_, err = http.RunHttpServer(lHttp, httpEngine, conf.AppConfig.Server, controllers.APIServiceInfo{
+	_, err = server.RunHttpServer(lHttp, httpEngine, conf.AppConfig.Server, controllers.APIServiceInfo{
 		Version:   version,
 		BuildSHA:  sha1ver,
 		BuildTime: buildTime,

@@ -17,8 +17,18 @@ const (
 	SL2 CryptoEngineSL = 2
 )
 
-type CryptoEngineType string
 type SupportedKeyTypeInfo struct {
 	Type  string `json:"type"`
 	Sizes []int  `json:"sizes"`
 }
+
+type CryptoEngineType string
+
+const (
+	PKCS11            CryptoEngineType = "PKCS11"
+	AzureKeyVault     CryptoEngineType = "AZURE_KEY_VAULT"
+	VaultKV2          CryptoEngineType = "HASHICORP_VAULT_KV_V2"
+	AWSKMS            CryptoEngineType = "AWS_KMS"
+	AWSSecretsManager CryptoEngineType = "AWS_SECRETS_MANAGER"
+	Filesystem        CryptoEngineType = "FILESYSTEM"
+)

@@ -5,13 +5,17 @@ import (
 	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/resources"
 )
 
-type CreateKMSInput struct {
-	Name string `json:"name"`
+type CreateKMSRequestBody struct {
+	Alias     string `json:"alias"`
+	Algorithm string `json:"algorithm"`
+	Size      int    `json:"size"`
+	PublicKey string `json:"public_key"`
 }
 
-type GetKMSKeysInput struct {
-	QueryParameters *resources.QueryParameters
+type GetKMSKeysResponse struct {
+	resources.IterableList[models.KMSKey]
+}
 
-	ExhaustiveRun bool //wether to iter all elems
-	ApplyFunc     func(kmsKey models.KMSKey)
+type GetItemsResponse[T models.KMSKey] struct {
+	resources.IterableList[T]
 }

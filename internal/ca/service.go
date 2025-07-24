@@ -35,7 +35,10 @@ func NewCAService(builder CAServiceBuilder) ca.CAService {
 
 func (svc *CAServiceBackend) CreateCA(ctx context.Context, input ca.CreateCAInput) error {
 	svc.kmsService.CreateKMSKey(ctx, kms.CreateKMSInput{
-		Name: input.Name,
+		Alias:     input.Name,
+		Algorithm: "RSA",
+		Size:      2048,
+		PublicKey: "",
 	})
 
 	ca, err := svc.caStorage.Insert(ctx, &models.CACertificate{

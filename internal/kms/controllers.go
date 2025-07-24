@@ -5,7 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/kms"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/models"
-	fiber_context_mw "github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/middleware/context"
+	fiber_context_mw "github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/server/middleware/context"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/resources"
 )
 
@@ -63,7 +63,7 @@ func (r *kmsHttpRoutes) GetAllKMSKeys(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"err": err.Error()})
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(GetKMSKeysResponse{
+	return ctx.Status(fiber.StatusOK).JSON(kms.GetKMSKeysResponse{
 		IterableList: resources.IterableList[models.KMSKey]{
 			NextBookmark: nextBookmark,
 			List:         kmsKeys,

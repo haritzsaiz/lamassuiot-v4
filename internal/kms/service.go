@@ -3,6 +3,7 @@ package kms
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/lamassuiot/lamassuiot/v4/pkg/kms"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/models"
@@ -31,11 +32,16 @@ func NewKMSService(builder KMSServiceBuilder) kms.KMSService {
 
 func (svc *KMSServiceBackend) CreateKMSKey(ctx context.Context, input kms.CreateKMSInput) error {
 	kmsKey, err := svc.kmsStorage.Insert(ctx, &models.KMSKey{
-		Name: input.Name,
+		Alias:      input.Alias,
+		Algorithm:  input.Algorithm,
+		Size:       input.Size,
+		PublicKey:  input.PublicKey,
+		CreationTS: time.Now(),
+		Metadata:   map[string]any{},
 	})
 
 	fmt.Println(kmsKey)
-	svc.logger.Info("KMS key created", "name", input.Name)
+	svc.logger.Info("KMS key created", "name", input.Alias)
 
 	if err != nil {
 		return err

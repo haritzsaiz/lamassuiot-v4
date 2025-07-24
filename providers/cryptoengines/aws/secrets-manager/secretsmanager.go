@@ -6,7 +6,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rsa"
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -14,22 +13,22 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	chelpers "github.com/lamassuiot/lamassuiot/shared/http/v3/pkg/helpers"
-	"github.com/lamassuiot/lamassuiot/v2/pkg/models"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/kms/cryptoengines"
-	"github.com/sirupsen/logrus"
+	httpclient "github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/client"
+	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/logger"
 )
 
 type AWSSecretsManagerCryptoEngine struct {
-	config    cryptoengines.CryptoEngineInfo
-	smngerCli *secretsmanager.Client
-	logger    *logrus.Entry
+	config      cryptoengines.CryptoEngineInfo
+	smngerCli   *secretsmanager.Client
+	logger      *logger.Logger
+	keyProvider *cryptoengines.SoftwareKeyProvider
 }
 
-func NewAWSSecretManagerEngine(logger *logrus.Entry, awsConf aws.Config, metadata map[string]any) (cryptoengines.CryptoEngine, error) {
-	lAWSSM := logger.WithField("subsystem-provider", "AWS SecretsManager Client")
+func NewAWSSecretManagerEngine(logger *logger.Logger, awsConf aws.Config, metadata map[string]any) (cryptoengines.CryptoEngine, error) {
+	lAWSSM := logger.With("subsystem-provider", "AWS SecretsManager Client")
 
-	httpCli, err := chelpers.BuildHTTPClientWithTracerLogger(http.DefaultClient, lAWSSM)
+	httpCli, err := httpclient.BuildHTTPClientWithTracerLogger(http.DefaultClient, lAWSSM)
 	if err != nil {
 		return nil, err
 	}
@@ -39,17 +38,18 @@ func NewAWSSecretManagerEngine(logger *logrus.Entry, awsConf aws.Config, metadat
 	smCli := secretsmanager.NewFromConfig(awsConf)
 
 	return &AWSSecretsManagerCryptoEngine{
-		logger:    lAWSSM,
-		smngerCli: smCli,
-		config: models.CryptoEngineInfo{
-			Type:          models.AWSSecretsManager,
-			SecurityLevel: models.SL1,
+		logger:      lAWSSM,
+		smngerCli:   smCli,
+		keyProvider: cryptoengines.NewSoftwareKeyProvider(logger),
+		config: cryptoengines.CryptoEngineInfo{
+			Type:          "AWSSecretsManager",
+			SecurityLevel: cryptoengines.SL1,
 			Provider:      "Amazon Web Services",
 			Name:          "Secrets Manager",
 			Metadata:      metadata,
-			SupportedKeyTypes: []models.SupportedKeyTypeInfo{
+			SupportedKeyTypes: []cryptoengines.SupportedKeyTypeInfo{
 				{
-					Type: models.KeyType(x509.RSA),
+					Type: "RSA",
 					Sizes: []int{
 						2048,
 						3072,
@@ -57,7 +57,7 @@ func NewAWSSecretManagerEngine(logger *logrus.Entry, awsConf aws.Config, metadat
 					},
 				},
 				{
-					Type: models.KeyType(x509.ECDSA),
+					Type: "ECDSA",
 					Sizes: []int{
 						224,
 						256,
@@ -69,7 +69,7 @@ func NewAWSSecretManagerEngine(logger *logrus.Entry, awsConf aws.Config, metadat
 	}, nil
 }
 
-func (engine *AWSSecretsManagerCryptoEngine) GetEngineConfig(ctx context.Context) models.CryptoEngineInfo {
+func (engine *AWSSecretsManagerCryptoEngine) GetEngineConfig(ctx context.Context) cryptoengines.CryptoEngineInfo {
 	return engine.config
 }
 
@@ -105,9 +105,7 @@ func (engine *AWSSecretsManagerCryptoEngine) GetPrivateKeyByID(ctx context.Conte
 		return nil, err
 	}
 
-	util := cryptoengines.NewSoftwareKeyProvider(engine.logger)
-
-	return util.ParsePrivateKey(decodedPemBytes)
+	return engine.keyProvider.ParsePrivateKey(decodedPemBytes)
 }
 
 func (engine *AWSSecretsManagerCryptoEngine) ListPrivateKeyIDs(ctx context.Context) ([]string, error) {
@@ -132,33 +130,33 @@ func (engine *AWSSecretsManagerCryptoEngine) ListPrivateKeyIDs(ctx context.Conte
 func (engine *AWSSecretsManagerCryptoEngine) CreateRSAPrivateKey(ctx context.Context, keySize int) (string, crypto.Signer, error) {
 	engine.logger.Debugf("creating RSA private key")
 
-	_, key, err := engine.softCryptoEngine.CreateRSAPrivateKey(keySize)
+	_, key, err := engine.keyProvider.CreateRSAPrivateKey(keySize)
 	if err != nil {
 		engine.logger.Errorf("could not create RSA private key: %s", err)
 		return "", nil, err
 	}
 
 	engine.logger.Debugf("RSA key successfully generated")
-	return engine.importKey(key)
+	return engine.importKey(ctx, key)
 }
 
 func (engine *AWSSecretsManagerCryptoEngine) CreateECDSAPrivateKey(ctx context.Context, curve elliptic.Curve) (string, crypto.Signer, error) {
 	engine.logger.Debugf("creating ECDSA private key")
 
-	_, key, err := engine.softCryptoEngine.CreateECDSAPrivateKey(curve)
+	_, key, err := engine.keyProvider.CreateECDSAPrivateKey(curve)
 	if err != nil {
 		engine.logger.Errorf("could not create ECDSA private key: %s", err)
 		return "", nil, err
 	}
 
 	engine.logger.Debugf("ECDSA key successfully generated")
-	return engine.importKey(key)
+	return engine.importKey(ctx, key)
 }
 
-func (engine *AWSSecretsManagerCryptoEngine) ImportRSAPrivateKey(ctx context.Context,key *rsa.PrivateKey) (string, crypto.Signer, error) {
+func (engine *AWSSecretsManagerCryptoEngine) ImportRSAPrivateKey(ctx context.Context, key *rsa.PrivateKey) (string, crypto.Signer, error) {
 	engine.logger.Debugf("importing RSA private key")
 
-	keyID, signer, err := engine.importKey(key)
+	keyID, signer, err := engine.importKey(ctx, key)
 	if err != nil {
 		engine.logger.Errorf("could not import RSA key: %s", err)
 		return "", nil, err
@@ -171,7 +169,7 @@ func (engine *AWSSecretsManagerCryptoEngine) ImportRSAPrivateKey(ctx context.Con
 func (engine *AWSSecretsManagerCryptoEngine) ImportECDSAPrivateKey(ctx context.Context, key *ecdsa.PrivateKey) (string, crypto.Signer, error) {
 	engine.logger.Debugf("importing ECDSA private key")
 
-	keyID, signer, err := engine.importKey(key)
+	keyID, signer, err := engine.importKey(ctx, key)
 	if err != nil {
 		engine.logger.Errorf("could not import ECDSA key: %s", err)
 		return "", nil, err
@@ -181,16 +179,16 @@ func (engine *AWSSecretsManagerCryptoEngine) ImportECDSAPrivateKey(ctx context.C
 	return keyID, signer, nil
 }
 
-func (engine *AWSSecretsManagerCryptoEngine) importKey(key crypto.Signer) (string, crypto.Signer, error) {
+func (engine *AWSSecretsManagerCryptoEngine) importKey(ctx context.Context, key crypto.Signer) (string, crypto.Signer, error) {
 	pubKey := key.Public()
 
-	keyID, err := .EncodePKIXPublicKeyDigest(pubKey)
+	keyID, err := engine.keyProvider.EncodePKIXPublicKeyDigest(pubKey)
 	if err != nil {
 		engine.logger.Errorf("could not encode public key digest: %s", err)
 		return "", nil, err
 	}
 
-	b64PemKey, err := engine.softCryptoEngine.MarshalAndEncodePKIXPrivateKey(key)
+	b64PemKey, err := engine.keyProvider.MarshalAndEncodePKIXPrivateKey(key)
 	if err != nil {
 		engine.logger.Errorf("could not marshal and encode private key: %s", err)
 		return "", nil, err
@@ -231,7 +229,7 @@ func (engine *AWSSecretsManagerCryptoEngine) RenameKey(ctx context.Context, oldI
 		return err
 	}
 
-	err = engine.DeleteKey(oldID)
+	err = engine.DeleteKey(ctx, oldID)
 	if err != nil {
 		engine.logger.Errorf("could not delete old key: %s", err)
 	}
@@ -240,7 +238,7 @@ func (engine *AWSSecretsManagerCryptoEngine) RenameKey(ctx context.Context, oldI
 	return nil
 }
 
-func (engine *AWSSecretsManagerCryptoEngine) DeleteKey(ctx context.Context,keyID string) error {
+func (engine *AWSSecretsManagerCryptoEngine) DeleteKey(ctx context.Context, keyID string) error {
 	engine.logger.Debugf("deleting key with ID: %s", keyID)
 
 	_, err := engine.smngerCli.DeleteSecret(ctx, &secretsmanager.DeleteSecretInput{

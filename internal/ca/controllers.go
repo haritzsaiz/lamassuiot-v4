@@ -5,7 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/ca"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/models"
-	fiber_context_mw "github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/middleware/context"
+	fiber_context_mw "github.com/lamassuiot/lamassuiot/v4/pkg/shared/http/server/middleware/context"
 	"github.com/lamassuiot/lamassuiot/v4/pkg/shared/resources"
 )
 
